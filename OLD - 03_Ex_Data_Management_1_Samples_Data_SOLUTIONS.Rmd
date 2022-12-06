@@ -24,6 +24,7 @@ Import the `lb` file
 -   Look at the structure of the file using `str()` or `tibble::glimpse()`
 
 ```{r}
+getwd()
 # read_csv() will not work, because this is not a CSV file
 lb <- haven::read_sas('../data/samples/lb.sas7bdat')
 head(lb)
@@ -131,33 +132,6 @@ lb$LBBLFL_f <- factor(lb$LBBLFL,
 table(lb$LBBLFL_f)
 ```
 
-## More on Factors
-
-Try ordering the levels of `LBTESTCD` by the values of `LBSTRESN`
-
-First, we show you how to make a box plot of these two columns. Rebuild the box plot after altering your factored version of `LBTESTCD`.
-
-```{r}
-# boxplot of LBSTRESN by LBTESTCD
-# first argument is a formula with column names, second argument is a dataframe
-boxplot(LBSTRESN ~ LBTESTCD, data = lb)
-
-# create new factored version of LBTESTCD here
-library(forcats)
-lb$LBTESTCD_f <- fct_reorder(lb$LBTESTCD, lb$LBSTRESN, .fun = mean)
-
-# rebuild the boxplot
-boxplot(LBSTRESN ~ LBTESTCD_f, data = lb)
-```
-
-Now switch up the order, so that the levels of `LBTESTCD` depend on `LBSTRESN` but in descending order:
-
-```{r}
-lb$LBTESTCD_f <- fct_reorder(lb$LBTESTCD, lb$LBSTRESN, .fun = mean, .desc = TRUE)
-# rebuild the boxplot
-boxplot(LBSTRESN ~ LBTESTCD_f, data = lb)
-```
-
 ## Missing data
 
 -   Check the LBSTNRLO and LBSTNRHI for missing data.
@@ -239,6 +213,7 @@ In this exercise, you may have copied variables as you transformed them. Do you 
     -   Or you could use other write commands to write to different formats. Look at `?readr` for more details. For even more import/export options, look at the `rio` (<https://github.com/leeper/rio>) package.
 
 ```{r}
+getwd()
 readr::write_csv(lb,"../data/samples/cleaned_lb.csv") 
 #this will write the output into the data samples folder. 
 ```
