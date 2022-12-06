@@ -1,0 +1,225 @@
+---
+title: "Exercise: Data Management 1 (SOLUTIONS)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+## Data Management Exercise (45-60 minutes)
+
+In the following exercise, you'll bring in some data and begin the process of cleaning it. The data files used for this and following exercises are located in the data/samples folder, and are in a SAS format.
+
+-   `data/samples/lb.sas7bdat`
+-   `data/samples/dm.sas7bdat`
+
+## Import the `lb` file
+
+Import the `lb` file
+
+-   What format is the file? What reader function can you use to bring it in?
+-   Look at the head of the file.
+-   Look at the structure of the file using `str()` or `tibble::glimpse()`
+
+```{r}
+getwd()
+# read_csv() will not work, because this is not a CSV file
+lb <- haven::read_sas('../data/samples/lb.sas7bdat')
+head(lb)
+str(lb)
+```
+
+## Examine the meta-information
+
+Because this is a SAS file, `haven` imported some additional information as "attributes" that include longer titles and SAS formats.
+
+You can see the information in the `str()` results or in the `glimpse()` results
+
+To pull out the attributes for a specific column, try using the `attr()` function. The syntax should be like follows:
+
+> `attr(dataframe$column, "attribute_name")`
+
+Try to pull up the "label" attribute for the first column in `lb`
+
+```{r}
+attr(lb$LBTEST, "label")
+```
+
+See if there is a "format.sas" label for that same column.
+
+```{r}
+attr(lb$LBTEST, "format.sas")
+```
+
+Now try adapting the following `lapply()` ("list apply") command to see attributes for all the columns.
+
+`lapply(dataframe, attr, "label")`
+
+-   `dataframe` should be the name of your data
+
+-   `attr` is the `attr()` function which can set or get an attribute. This function gets "applied" to each column in the data frame.
+
+-   `"label"` is the label of the specific attributes. This argument gets passed through `lapply()` and sent to `attr()` each time it gets applied (to each column of the data frame).
+
+First try with the "label" attribute.
+
+```{r}
+# getting an 
+lapply(lb, attr, "label")
+```
+
+Now try with the "format.sas" attribute.
+
+```{r}
+lapply(lb,attr,"format.sas")
+```
+
+## Change the SUBJID data type
+
+-   What is the current `SUBJID` data type? Change it to character.
+
+```{r}
+class(lb$SUBJID)
+lb$SUBJID <- as.character(lb$SUBJID)
+```
+
+## Change EPOCH to factor
+
+-   create a `table()` of the variable EPOCH
+
+-   how many `unique()` values does EPOCH contain
+
+-   convert EPOCH to a factor
+
+    -   What will you do with any blank ("") labels?
+
+    -   Check the factored variable with a `table()` command after conversion. Did you accomplish what you intended?
+
+```{r}
+table(lb$EPOCH)
+unique(lb$EPOCH)
+lb$EPOCH_f <- factor(lb$EPOCH,levels=c("SCREENING","TREATMENT","FOLLOW-UP"))
+table(lb$EPOCH_f)
+```
+
+## Change other factors
+
+-   What other variables could be consider factors?
+
+-   If it make sense, change them into factors.
+
+    -   You can always create a factored copy of a variable and keep the original, to give you flexibility.
+
+```{r}
+lb$LBTEST_f <- factor(lb$LBTEST)
+lb$LBTESTCD_f <- factor(lb$LBTESTCD)
+```
+
+## Recode LBBLFL
+
+-   The LBBLFL has values "Y" or "". Recode it into a factor that has 0 and 1 values instead, ("Y" =1, "" = 0.)
+
+-   Use both the `levels=` and `labels=` options of the `factor()` function
+
+-   Check with a `table()` afterwards
+
+```{r}
+lb$LBBLFL_f <- factor(lb$LBBLFL,
+                        levels=c("Y",""),
+                        labels=c(1,0))
+table(lb$LBBLFL_f)
+```
+
+## Missing data
+
+-   Check the LBSTNRLO and LBSTNRHI for missing data.
+
+-   How many missing values are there in each variable?
+
+-   What is the percent missing for each variable?
+
+```{r}
+sum(is.na(lb$LBSTNRLO))
+sum(is.na(lb$LBSTNRHI))
+# 8 missing values each
+mean(is.na(lb$LBSTNRLO))
+mean(is.na(lb$LBSTNRHI))
+# about .27% missing (0.0027)
+```
+
+## Convert LBDTC to a date
+
+-   Convert LBDTC to a date time.
+
+    -   First inspect the data. What format is it in: year first or year last? Where are the month and day components? What is the separator?
+
+    -   Apply a lubridate command to the variable.
+
+    -   Check your conversion. Did you do what you wanted?
+
+```{r}
+head(lb$LBDTC)
+lb$LBDTC_dt <- lubridate::ymd_hm(lb$LBDTC)
+head(lb$LBDTC_dt)
+```
+
+## Using `ifelse` to recode data
+
+The lab results sometimes have lower and upper reference ranges. Let's create a flag that indicates if the lab results is **within** this range.
+
+-   Use the `ifelse()` function to create an indicator variable called LB_IN_RANGE
+
+-   The logic of the variable should be as such:
+
+    -   TRUE if the value of the lab variable is above the lower reference value and below the upper reference value.
+
+    -   FALSE otherwise.
+
+    -   use the code pattern VAR = ifelse( comparison_statement, TRUE, FALSE)
+
+        -   You will have to change the VAR name and figure out the comparison_statement logic
+
+    -   Check your resulting variable with a table() command. Does it make sense?
+
+```{r}
+lb$LB_IN_RANGE <- ifelse(lb$LBSTRESN >= lb$LBSTNRLO & lb$LBSTRESN <= lb$LBSTNRHI, TRUE, FALSE)
+table(lb$LB_IN_RANGE)
+```
+
+## Save your cleaned results
+
+Are there any other changes you would make to the data?
+
+In this exercise, you may have copied variables as you transformed them. Do you want to keep the original raw data or eliminate it from the data set.
+
+-   If you want to drop a variable or column from the data set, you can set it to NULL.
+
+    -   `dta$col <- NULL`
+
+-   Or, you may choose to keep the original "raw" variable.
+
+    -   If you keep both copies, someone may get confused about which is the "correct" variable, or inadvertently use the wrong one.
+
+    -   On the other hand, the original copy provides a "backup" variable.
+
+    -   Talk with your colleagues about best practices, and about naming conventions.
+
+-   Once you have arrived at your finalized "clean" data set, save it.
+
+    -   You can use the `readr::write_csv()` command to write it to disk.
+
+    -   Or you could use other write commands to write to different formats. Look at `?readr` for more details. For even more import/export options, look at the `rio` (<https://github.com/leeper/rio>) package.
+
+```{r}
+getwd()
+readr::write_csv(lb,"../data/samples/cleaned_lb.csv") 
+#this will write the output into the data samples folder. 
+```
+
+Also try saving this to a *.rds* file.
+
+```{r}
+saveRDS(lb, "../data/samples/cleaned_lb.rds")
+```

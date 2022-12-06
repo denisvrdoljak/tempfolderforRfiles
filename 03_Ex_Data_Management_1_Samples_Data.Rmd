@@ -1,0 +1,207 @@
+---
+title: "Exercise: Data Management 1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+course_dir <- file.path("C:", "Users", "rdefa", "rdefaccio_outlook.com", 
+                        "OneDrive", "Desktop", "1a - Active Projects", 
+                        "CDC Phase 2 R Dec. 2022", "R_Programming_CDC_Bootcamp")
+knitr::opts_knit$set(warning = FALSE, message = FALSE, root.dir = course_dir)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, root.dir = course_dir)
+```
+
+## Data Management Exercise (45-60 minutes)
+
+In the following exercise, you'll bring in some data and begin the process of cleaning it. The data files used for this and following exercises are located in the data/samples folder, and are in a SAS format.
+
+-   `data/samples/lb.sas7bdat`
+-   `data/samples/dm.sas7bdat`
+
+## Bring in the `lb` file
+
+Import the `lb` file
+
+-   What format is the file? What reader function can you use to bring it in?
+-   Look at the head of the file.
+-   Look at the structure of the file using `str()` or `tibble::glimpse()`
+
+```{r}
+
+```
+
+## Examine the meta-information
+
+Because this is a SAS file, `haven` imported some additional information as "attributes" that include longer titles and SAS formats.
+
+You can see the information in the `str()` results or in the `glimpse()` results
+
+To pull out the attributes for a specific column, try using the `attr()` function. The syntax should be like follows:
+
+> `attr(dataframe, "attribute_name")`
+
+Try to pull up the attribute "label" for the first column in `lb`
+
+```{r}
+
+```
+
+See if there is a "format.sas" label for that same column.
+
+```{r}
+
+```
+
+Now try adapting the following `lapply()` ("list apply") command to see attributes for all the columns.
+
+`lapply(dataframe, attr, "label")`
+
+-   `dataframe` should be the name of your data
+
+-   `attr` is the `attr()` function which can set or get an attribute
+
+-   `"label"` is the label of the specific attributes.
+
+First try with the "label" attribute.
+
+```{r}
+
+```
+
+Now try with the "format.sas" attribute.
+
+```{r}
+
+```
+
+## Change the SUBJID data type
+
+-   What is the current `SUBJID` data type? Change it to character.
+
+```{r}
+
+```
+
+## Change EPOCH to factor
+
+-   create a `table()` of the variable EPOCH
+
+-   how many `unique()` values does EPOCH contain
+
+-   convert EPOCH to a factor
+
+    -   What will you do with any blank ("") labels?
+
+    -   Check the factored variable with a `table()` command after conversion. Did you accomplish what you intended?
+
+```{r}
+
+
+```
+
+## Change other factors
+
+-   What other variables could be consider factors?
+
+-   If it make sense, change them into factors.
+
+    -   You can always create a factored copy of a variable and keep the original, to give you flexibility.
+
+```{r}
+
+```
+
+## Recode LBBLFL
+
+-   The LBBLFL has values "Y" or "". Recode it into a factor that has 0 and 1 values instead, ("Y" =1, "" = 0.)
+
+-   Use both the `levels=` and `labels=` options of the `factor()` function
+
+-   Check with a `table()` afterwards
+
+```{r}
+
+```
+
+## Missing data
+
+-   Check the LBSTNRLO and LBSTNRHI for missing data.
+
+-   How many missing values are there in each variable?
+
+-   What is the percent missing for each variable?
+
+```{r}
+
+```
+
+## Convert LBDTC to a date
+
+-   Convert LBDTC to a date time.
+
+    -   First inspect the data. What format is it in: year first or year last? Where are the month and day components? What is the separator?
+
+    -   Apply a lubridate command to the variable.
+
+    -   Check your conversion. Did you do what you wanted?
+
+```{r}
+
+```
+
+## Using `ifelse` to recode data
+
+The lab results sometimes have lower and upper reference ranges. Let's create a flag that indicates if the lab results is **within** this range.
+
+-   Use the `ifelse()` function to create an indicator variable called LB_IN_RANGE
+
+-   The logic of the variable should be as such:
+
+    -   TRUE if the value of the lab variable is above the lower reference value and below the upper reference value.
+
+    -   FALSE otherwise.
+
+    -   use the code pattern VAR = ifelse( comparison_statement, TRUE, FALSE)
+
+        -   You will have to change the VAR name and figure out the comparison_statement logic
+
+    -   Check your resulting variable with a table() command. Does it make sense?
+
+```{r}
+
+```
+
+## Save your cleaned results
+
+Are there any other changes you would make to the data?
+
+In this exercise, you may have copied variables as you transformed them. Do you want to keep the original raw data or eliminate it from the data set.
+
+-   If you want to drop a variable or column from the data set, you can set it to NULL.
+
+    -   `dta$col <- NULL`
+
+-   Or, you may choose to keep the original "raw" variable.
+
+    -   If you keep both copies, someone may get confused about which is the "correct" variable, or inadvertently use the wrong one.
+
+    -   On the other hand, the original copy provides a "backup" variable.
+
+    -   Talk with your colleagues about best practices, and about naming conventions.
+
+-   Once you have arrived at your finalized "clean" data set, save it.
+
+    -   You can use the `readr::write_csv()` command to write it to disk.
+
+    -   Or you could use other write commands to write to different formats. Look at `?readr` for more details. For even more import/export options, look at the `rio` (<https://github.com/leeper/rio>) package.
+
+```{r}
+#this will write the output into the data/samples folder. 
+
+```
+
+Also try saving this to a *.rds* file.
+
+```{r}
+
+```
